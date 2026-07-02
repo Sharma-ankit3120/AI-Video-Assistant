@@ -108,3 +108,4 @@ requests==2.32.4
 accelerate==1.8.1
 safetensors==0.5.3
 protobuf==6.31.1
+youtube-transcript-api==1.1.0

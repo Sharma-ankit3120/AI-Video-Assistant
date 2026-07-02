@@ -460,6 +460,9 @@ st.markdown("</div>", unsafe_allow_html=True)
 # ══════════════════════════════════════════════════════════════════
 #  PIPELINE TRIGGER
 # ══════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
+#  PIPELINE TRIGGER
+# ══════════════════════════════════════════════════════════════════
 if run_btn and source.strip():
     st.session_state.update(
         pipeline_done=False, result=None,
@@ -478,19 +481,32 @@ if run_btn and source.strip():
         )
 
     try:
-        update_ui(0, "Loading & chunking input…")
-        from utils.audio_processor import process_input
-        try:
-            chunks = process_input(source)
+        update_ui(0, "Loading & fetching transcript…")
 
-        except Exception as e:
-            st.error(str(e))
-            st.stop()
-        # chunks = process_input(source.strip())
+        is_youtube = source.strip().startswith("http")
 
-        update_ui(1, "Transcribing audio…")
-        from core.transcriber import transcribe_all
-        transcript = transcribe_all(chunks, translate=True)
+        if is_youtube:
+            # ✅ FIX: try YouTube transcript API first (no audio download needed)
+            try:
+                from utils.youtube_transcript import fetch_transcript
+                transcript = fetch_transcript(source.strip())
+                print("✅ Got transcript from YouTube API")
+
+            except Exception as e:
+                # fallback to audio download if subtitles not available
+                print(f"YouTube API failed ({e}), falling back to audio...")
+                from utils.audio_processor import process_input
+                from core.transcriber import transcribe_all
+                chunks = process_input(source.strip())
+                update_ui(1, "Transcribing audio…")
+                transcript = transcribe_all(chunks, translate=True)
+        else:
+            # local file — must use audio
+            from utils.audio_processor import process_input
+            from core.transcriber import transcribe_all
+            chunks = process_input(source.strip())
+            update_ui(1, "Transcribing audio…")
+            transcript = transcribe_all(chunks, translate=True)
 
         update_ui(2, "Summarising & generating title…")
         from core.summarize import summmarize, generate_title
@@ -508,13 +524,13 @@ if run_btn and source.strip():
         rag_chain = build_rag_chain(transcript)
 
         st.session_state.result = {
-            "title":        title,
-            "transcript":   transcript,
-            "summary":      summary,
-            "action_items": parse_list(action_items),
-            "key_decisions":parse_list(key_decisions),
-            "questions":    parse_list(questions),
-            "rag_chain":    rag_chain,
+            "title":         title,
+            "transcript":    transcript,
+            "summary":       summary,
+            "action_items":  parse_list(action_items),
+            "key_decisions": parse_list(key_decisions),
+            "questions":     parse_list(questions),
+            "rag_chain":     rag_chain,
         }
         st.session_state.pipeline_done = True
         st.session_state.pipeline_step = len(STEPS)
@@ -526,12 +542,6 @@ if run_btn and source.strip():
             unsafe_allow_html=True,
         )
 
-    except FileNotFoundError as e:
-        st.session_state.error = f"File not found: {e}"
-        st.session_state.pipeline_done = True
-    except ValueError as e:
-        st.session_state.error = f"Invalid input: {e}"
-        st.session_state.pipeline_done = True
     except Exception as e:
         logging.exception("Unhandled exception")
         st.session_state.error = f"{type(e).__name__}: {e}"
