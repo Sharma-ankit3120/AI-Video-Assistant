@@ -44,3 +44,6 @@ downloads/
 chunks/
 *.wav
 *.mp3
+
+main.py
+test.py
