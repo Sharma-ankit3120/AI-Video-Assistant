@@ -78,15 +78,35 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 def download_youtube_audio(url: str) -> str:
     output_path = os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s")
     ydl_opts = {
-        "format" : "bestaudio/best",
-        "outtmpl" : output_path,
-        "ffmpeg_location": r"C:\ffmpeg\ffmpeg-8.1.2-essentials_build\bin",
-        "postprocessors" : [{
-            "key" : "FFmpegExtractAudio",
-            "preferredcodec" : "wav",
-            "preferredquality" : "192",
-        }], "quiet" : True
-    }
+    "format": "bestaudio/best",
+    "outtmpl": output_path,
+    "quiet": True,
+    "no_warnings": True,
+    "noplaylist": True,
+    "overwrites": True,
+    "extractaudio": True,
+    "postprocessors": [
+        {
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "wav",
+            "preferredquality": "192",
+        }
+    ],
+}
+
+
+    # ydl_opts = {
+    #     "format" : "bestaudio/best",
+    #     "outtmpl" : output_path,
+    #     "ffmpeg_location": r"C:\ffmpeg\ffmpeg-8.1.2-essentials_build\bin",
+    #     "postprocessors" : [{
+    #         "key" : "FFmpegExtractAudio",
+    #         "preferredcodec" : "wav",
+    #         "preferredquality" : "192",
+    #     }], "quiet" : True
+    # }
+
+      
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
@@ -123,25 +143,50 @@ def chunk_audio(wav_path: str, source_lang: str = "en") -> list:
 
     return chunks
 
-
-def process_input(source: str) -> list:  # ✅ returns only chunks now, not tuple
+def process_input(source: str) -> list:
     if source.startswith("http://") or source.startswith("https://"):
         print("Detected YouTube URL. Downloading audio")
-        wav_path = download_youtube_audio(source)
+
+        try:
+            wav_path = download_youtube_audio(source)
+
+        except Exception as e:
+            raise RuntimeError(
+                f"""
+Unable to download the YouTube video.
+
+Possible reasons:
+• The video is private.
+• The video is age-restricted.
+• YouTube temporarily blocked automated downloads.
+• The video requires sign-in.
+• The video is unavailable in your region.
+
+Original error:
+{e}
+"""
+            )
+
     else:
         print("Detected local file. Converting to WAV")
         wav_path = convert_to_wav(source)
 
-    # detect language from first 30 seconds before chunking
     print("Detecting language...")
     sample = AudioSegment.from_wav(wav_path)[:30000]
     sample_path = wav_path + "_sample.wav"
     sample.export(sample_path, format="wav")
+
     detected_lang = detect_language(sample_path)
+
     os.remove(sample_path)
 
     print("Chunking audio into segments")
-    chunks = chunk_audio(wav_path, source_lang=detected_lang)
+
+    chunks = chunk_audio(
+        wav_path,
+        source_lang=detected_lang
+    )
+
     print(f"Audio Created - {len(chunks)} chunk(S) created.")
 
-    return chunks  # ✅ just chunks, no lang needed anymore
+    return chunks

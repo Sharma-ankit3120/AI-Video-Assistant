@@ -480,7 +480,13 @@ if run_btn and source.strip():
     try:
         update_ui(0, "Loading & chunking input…")
         from utils.audio_processor import process_input
-        chunks = process_input(source.strip())
+        try:
+            chunks = process_input(source)
+
+        except Exception as e:
+            st.error(str(e))
+            st.stop()
+        # chunks = process_input(source.strip())
 
         update_ui(1, "Transcribing audio…")
         from core.transcriber import transcribe_all
