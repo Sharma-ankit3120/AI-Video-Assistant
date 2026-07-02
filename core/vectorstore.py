@@ -11,6 +11,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
+
 CHROMA_DIR = "chroma_db"
 COLLECTION_NAME = "meeting_transcripts"
 
@@ -26,9 +27,10 @@ def build_vector_store(transcript:str) -> Chroma:
 
     print(f"Building vector store for transcript...")
 
+
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size= 500,
-        chunk_overlap=50
+        chunk_size= 1000,
+        chunk_overlap=200
     )
     chunks = splitter.split_text(transcript)
     
@@ -38,6 +40,7 @@ def build_vector_store(transcript:str) -> Chroma:
     ]
 
     embedding_model = get_embeddings()
+
 
     vector_store = Chroma.from_documents(
         documents=docs,
@@ -58,8 +61,12 @@ def load_vector_store() ->Chroma:
 
     return vector_store
 
-def get_retriever(vector_store : Chroma, k:int =4):
+def get_retriever(vector_store : Chroma, k:int =8):
     return vector_store.as_retriever(
-        search_type = 'similarity',
-        search_kwargs = {"k":k}
+        search_type="mmr",
+        search_kwargs={
+            "k": k,
+            "fetch_k": 20,
+            "lambda_mult": 0.7
+        }   
     )

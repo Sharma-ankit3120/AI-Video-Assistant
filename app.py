@@ -1,5 +1,10 @@
 import streamlit as st
 import logging
+from langchain_core.messages import HumanMessage, AIMessage
+
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 # ── page config ────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -597,9 +602,11 @@ if st.session_state.result:
 
     if st.session_state.chat_history:
         msgs_html = ""
-        for role, text in st.session_state.chat_history:
-            cls = "msg-user" if role == "user" else "msg-ai"
-            msgs_html += f'<div class="{cls}">{text}</div>'
+        for msg in st.session_state.chat_history:
+            if isinstance(msg, HumanMessage):
+              msgs_html += f'<div class="msg-user">{msg.content}</div>'
+            elif isinstance(msg, AIMessage):
+              msgs_html += f'<div class="msg-ai">{msg.content}</div>'
         st.markdown(msgs_html, unsafe_allow_html=True)
     else:
         st.markdown('<p class="chat-empty">Ask anything about the video…</p>', unsafe_allow_html=True)
@@ -618,9 +625,11 @@ if st.session_state.result:
     if send_btn and user_query.strip():
         from core.rag_engine import ask_question
         with st.spinner("Thinking…"):
-            answer = ask_question(r["rag_chain"], user_query.strip())
-        st.session_state.chat_history.append(("user", user_query.strip()))
-        st.session_state.chat_history.append(("ai",   answer))
-        st.rerun()
+
+            st.session_state.chat_history.append(HumanMessage(content=user_query.strip()))
+            answer = ask_question(r["rag_chain"],user_query.strip(),st.session_state.chat_history)
+        
+            st.session_state.chat_history.append(AIMessage(content=answer))
+            st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)

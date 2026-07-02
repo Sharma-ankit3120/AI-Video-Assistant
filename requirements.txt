@@ -1,37 +1,110 @@
-yt-dlp>=2024.4.9
-pydub>=0.25.1
+# yt-dlp>=2024.4.9
+# pydub>=0.25.1
 
-openai-whisper==20250625
-torch>=2.6
-torchaudio>=2.6
 
-deep-translator>=1.11.4
+# torch>=2.6
+# torchaudio>=2.6
 
+# deep-translator>=1.11.4
+
+# langchain==0.3.27
+# langchain-core==0.3.72
+# langchain-community==0.3.27
+# langchain-huggingface==0.3.1
+# langchain-mistralai==0.2.11
+
+# mistralai>=1.9.10
+
+# chromadb>=1.0.15
+# sentence-transformers>=5.0.0
+# huggingface-hub>=0.34.4
+# tiktoken>=0.9.0
+
+# streamlit>=1.46.0
+# streamlit-extras>=0.7.6
+# watchdog>=6.0.0
+
+# reportlab>=4.4.2
+# fpdf2>=2.8.4
+
+# python-dotenv>=1.1.1
+# numpy>=2.2
+# tqdm>=4.67
+# requests>=2.32
+
+# accelerate>=1.8.1
+# safetensors>=0.5.3
+# protobuf>=5.29
+
+# faster-whisper
+# ctranslate2
+
+
+# =========================
+# Audio
+# =========================
+yt-dlp==2025.06.30
+pydub==0.25.1
+
+# =========================
+# PyTorch (CPU)
+# =========================
+torch==2.7.1
+torchaudio==2.7.1
+
+# =========================
+# Whisper
+# =========================
+faster-whisper==1.2.0
+ctranslate2==4.6.0
+
+# =========================
+# Translation
+# =========================
+deep-translator==1.11.4
+
+# =========================
+# LangChain
+# =========================
 langchain==0.3.27
 langchain-core==0.3.72
 langchain-community==0.3.27
 langchain-huggingface==0.3.1
 langchain-mistralai==0.2.11
+langchain-chroma==0.2.5
 
-mistralai>=1.9.10
+# =========================
+# LLM
+# =========================
+mistralai==1.9.10
 
-chromadb>=1.0.15
-sentence-transformers>=5.0.0
-huggingface-hub>=0.34.4
-tiktoken>=0.9.0
+# =========================
+# Vector Database
+# =========================
+chromadb==1.0.15
+sentence-transformers==5.0.0
+huggingface-hub==0.34.4
+tiktoken==0.9.0
 
-streamlit>=1.46.0
-streamlit-extras>=0.7.6
-watchdog>=6.0.0
+# =========================
+# Streamlit
+# =========================
+streamlit==1.46.1
+streamlit-extras==0.7.6
 
-reportlab>=4.4.2
-fpdf2>=2.8.4
+# =========================
+# PDF Generation
+# =========================
+reportlab==4.4.2
+fpdf2==2.8.4
 
-python-dotenv>=1.1.1
-numpy>=2.2
-tqdm>=4.67
-requests>=2.32
-
-accelerate>=1.8.1
-safetensors>=0.5.3
-protobuf>=5.29
+# =========================
+# Utilities
+# =========================
+python-dotenv==1.1.1
+numpy==2.3.1
+tqdm==4.67.1
+requests==2.32.4
+accelerate==1.8.1
+safetensors==0.5.3
+protobuf==6.31.1
