@@ -464,15 +464,14 @@ st.markdown("</div>", unsafe_allow_html=True)
 #  PIPELINE TRIGGER
 # ══════════════════════════════════════════════════════════════════
 if run_btn and source.strip():
-    # clear everything on every new run
-    st.session_state.result = None
-    st.session_state.chat_history = []
-    st.session_state.pipeline_done = False
-    st.session_state.pipeline_step = 0
-    st.session_state.error = None
+    st.session_state.update(
+        pipeline_done=False, result=None,
+        chat_history=[], error=None, pipeline_step=0,
+    )
 
     pipeline_ph = st.empty()
     status_ph   = st.empty()
+
 
     def update_ui(step: int, msg: str):
         with pipeline_ph.container():

@@ -1,14 +1,12 @@
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.proxies import WebshareProxyConfig
-from youtube_transcript_api._errors import NoTranscriptFound
 import re
-import streamlit as st
 
 def get_video_id(url: str) -> str:
+    """Extract video ID from YouTube URL"""
     patterns = [
-        r"v=([^&]+)",
-        r"youtu\.be/([^?]+)",
-        r"embed/([^?]+)",
+        r"v=([^&]+)",           # standard ?v=
+        r"youtu\.be/([^?]+)",   # short URL
+        r"embed/([^?]+)",       # embed URL
     ]
     for pattern in patterns:
         match = re.search(pattern, url)
@@ -18,35 +16,35 @@ def get_video_id(url: str) -> str:
 
 
 def fetch_transcript(url: str) -> str:
+    """
+    Fetch transcript directly from YouTube subtitles.
+    Tries English first, then Hindi (translated to English), then any available.
+    No audio download needed — works on Streamlit Cloud.
+    """
     video_id = get_video_id(url)
     print(f"Fetching transcript for video: {video_id}")
 
-    # ✅ use webshare proxy to bypass YouTube cloud IP block
-    proxy_config = WebshareProxyConfig(
-    proxy_username=st.secrets["udqvabkd"],
-    proxy_password=st.secrets["Phx48ktk6ftbl"],
-    proxy_domain="proxy.webshare.io",  # ✅ add this
-    proxy_port=int(st.secrets["6754"]),  # ✅ add this
-)
-
-    ytt = YouTubeTranscriptApi(proxy_config=proxy_config)
-
     try:
-        fetched = ytt.fetch(video_id, languages=["en"])
+        # Try English transcript first
+        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=["en"])
         print("Found English transcript")
 
-    except NoTranscriptFound:
+    except Exception:
         try:
-            fetched = ytt.fetch(video_id, languages=["hi"])
+            # Try Hindi transcript
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=["hi"])
             print("Found Hindi transcript")
 
-        except NoTranscriptFound:
-            transcript_list = ytt.list(video_id)
+        except Exception:
+            # Get whatever is available
+            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
             transcript_obj = transcript_list.find_transcript(
                 [t.language_code for t in transcript_list]
             )
-            fetched = transcript_obj.translate("en").fetch()
-            print("Translated transcript to English")
+            # translate to English if not already
+            transcript = transcript_obj.translate("en").fetch()
+            print(f"Translated transcript to English")
 
-    full_text = " ".join([snippet.text for snippet in fetched])
+    # join all text segments
+    full_text = " ".join([entry["text"] for entry in transcript])
     return full_text
