@@ -23,9 +23,11 @@ def fetch_transcript(url: str) -> str:
 
     # ✅ use webshare proxy to bypass YouTube cloud IP block
     proxy_config = WebshareProxyConfig(
-        proxy_username=st.secrets["PROXY_USERNAME"],
-        proxy_password=st.secrets["PROXY_PASSWORD"],
-    )
+    proxy_username=st.secrets["udqvabkd"],
+    proxy_password=st.secrets["Phx48ktk6ftbl"],
+    proxy_domain="proxy.webshare.io",  # ✅ add this
+    proxy_port=int(st.secrets["6754"]),  # ✅ add this
+)
 
     ytt = YouTubeTranscriptApi(proxy_config=proxy_config)
 
