@@ -1,12 +1,14 @@
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.proxies import WebshareProxyConfig
+from youtube_transcript_api._errors import NoTranscriptFound
 import re
+import streamlit as st
 
 def get_video_id(url: str) -> str:
-    """Extract video ID from YouTube URL"""
     patterns = [
-        r"v=([^&]+)",           # standard ?v=
-        r"youtu\.be/([^?]+)",   # short URL
-        r"embed/([^?]+)",       # embed URL
+        r"v=([^&]+)",
+        r"youtu\.be/([^?]+)",
+        r"embed/([^?]+)",
     ]
     for pattern in patterns:
         match = re.search(pattern, url)
@@ -16,35 +18,33 @@ def get_video_id(url: str) -> str:
 
 
 def fetch_transcript(url: str) -> str:
-    """
-    Fetch transcript directly from YouTube subtitles.
-    Tries English first, then Hindi (translated to English), then any available.
-    No audio download needed — works on Streamlit Cloud.
-    """
     video_id = get_video_id(url)
     print(f"Fetching transcript for video: {video_id}")
 
+    # ✅ use webshare proxy to bypass YouTube cloud IP block
+    proxy_config = WebshareProxyConfig(
+        proxy_username=st.secrets["PROXY_USERNAME"],
+        proxy_password=st.secrets["PROXY_PASSWORD"],
+    )
+
+    ytt = YouTubeTranscriptApi(proxy_config=proxy_config)
+
     try:
-        # Try English transcript first
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=["en"])
+        fetched = ytt.fetch(video_id, languages=["en"])
         print("Found English transcript")
 
-    except Exception:
+    except NoTranscriptFound:
         try:
-            # Try Hindi transcript
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=["hi"])
+            fetched = ytt.fetch(video_id, languages=["hi"])
             print("Found Hindi transcript")
 
-        except Exception:
-            # Get whatever is available
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+        except NoTranscriptFound:
+            transcript_list = ytt.list(video_id)
             transcript_obj = transcript_list.find_transcript(
                 [t.language_code for t in transcript_list]
             )
-            # translate to English if not already
-            transcript = transcript_obj.translate("en").fetch()
-            print(f"Translated transcript to English")
+            fetched = transcript_obj.translate("en").fetch()
+            print("Translated transcript to English")
 
-    # join all text segments
-    full_text = " ".join([entry["text"] for entry in transcript])
+    full_text = " ".join([snippet.text for snippet in fetched])
     return full_text
